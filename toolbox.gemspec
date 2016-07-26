@@ -6,7 +6,7 @@ require "capistrano/rails/toolbox/version"
 # Describe your gem and declare its dependencies:
 Gem::Specification.new do |s|
   s.name        = "capistrano-rails-toolbox"
-  s.version     = Capistrano::Rails::Toolbox
+  s.version     = Capistrano::Rails::Toolbox::VERSION
   s.authors     = ["ACzero"]
   s.email       = ["lzh.scut@hotmail.com"]
   s.homepage    = "..."
@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
   s.add_dependency "rails", "~> 4.1.7"
   s.add_dependency "capistrano", "~> 3.1"
   s.add_dependency "capistrano-rails", "~> 1.1"
+  s.add_dependency "sshkit", "~> 1.3"
 
   s.add_development_dependency "sqlite3"
 end
