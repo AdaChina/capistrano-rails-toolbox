@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version     = Capistrano::Rails::Toolbox::VERSION
   s.authors     = ["ACzero"]
   s.email       = ["lzh.scut@hotmail.com"]
-  s.homepage    = "..."
+  s.homepage    = "https://github.com/AdaChina/capistrano-rails-toolbox"
   s.summary     = "..."
   s.description = "..."
   s.license     = "MIT"
