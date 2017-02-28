@@ -5,6 +5,7 @@ namespace :toolbox do
     DESC
     task :console do
       on roles(:app) do |server|
+        set :format, :pretty
         puts "Opening a console on: #{host}...."
         command = "cd #{fetch(:deploy_to)}/current && "\
                   "RAILS_ENV=#{fetch(:stage)} "\
