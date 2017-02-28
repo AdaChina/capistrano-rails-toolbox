@@ -20,6 +20,7 @@ namespace :toolbox do
     task :log do
       on roles :app do
         set :log_level, :debug
+        set :format, :pretty
         configure_backend
 
         log_path = "#{shared_path}/log/#{fetch(:rails_env)}.log"
