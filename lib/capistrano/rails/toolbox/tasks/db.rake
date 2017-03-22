@@ -1,3 +1,5 @@
+class NotSupportDatabaseAdapter < RuntimeError; end
+
 namespace :toolbox do
   namespace :pg do
     desc <<-DESC
@@ -7,63 +9,90 @@ namespace :toolbox do
       on roles(:db) do |server|
         info "make sure you are not connecting to the local database"
 
-        username, password, database, host = remote_database_config(fetch(:stage))
-        l_username, l_password, l_database, l_host = local_database_config
+        local_config_path = 'config/database.yml'
+        remote_config_path = "#{shared_path}/config/database.yml"
 
-        backup_file_name = "pg_dump.sql.bz2"
-        dump_file_path = "#{fetch(:deploy_to)}/#{backup_file_name}"
-        local_file_path = "/tmp/#{backup_file_name}"
-        unzip_file_path = "/tmp/pg_dump.sql"
+        puts <<-MSG
+default local config path: #{local_config_path}
+default remote config path: #{remote_config_path}
+        MSG
 
-        info "start dumping database from remote..."
-        no_output do
-          execute "export PGPASSWORD=#{password}; pg_dump -U #{username} -h #{host} #{database} -a --no-owner --no-acl | bzip2 -9 > #{dump_file_path}"
+        ask(:enter_path, "enter your custom config path?(Y/N)")
+        if fetch(:enter_path) == 'Y'
+          ask(:local_config_path, 'local database config path')
+          ask(:remote_config_path, 'remote database config path')
+          local_config_path = fetch(:local_config_path)
+          remote_config_path = fetch(:remote_config_path)
         end
 
-        info "downloading..."
-        download! dump_file_path, local_file_path
+        remote_config = remote_db_config(remote_config_path)
+        local_config = local_db_config(local_config_path)
 
-        info "decompressing..."
-        system "bzip2 -d -c #{local_file_path} >> #{unzip_file_path}"
+        db_filename = "db_dump"
+        dump_file_path = "#{fetch(:deploy_to)}/#{db_filename}"
+        local_file_path = "/tmp/#{db_filename}"
 
-        info "reset local database"
+        puts "start dumping database from remote..."
+        no_output do
+          execute dump_cmd(remote_config, dump_file_path)
+        end
+
+        puts "downloading..."
+        no_output do
+          download! dump_file_path, local_file_path
+        end
+
+        puts "reset local database"
         system "bundle exec rake db:drop"
         system "bundle exec rake db:create"
-        system "bundle exec rake db:schema:load"
 
-        info "loading data..."
-        system "export PGPASSWORD=#{password}; psql -U #{l_username} #{l_database} < #{unzip_file_path}"
+        puts "loading data..."
+        system import_cmd(local_config, local_file_path)
+
+        puts "removing dump file..."
         system "rm #{local_file_path}"
-        system "rm #{unzip_file_path}"
-        execute "rm #{dump_file_path}"
-        info "done!"
+        no_output { execute "rm #{dump_file_path}" }
+        puts "done!"
       end
     end
 
-    def remote_database_config(stage)
+    def remote_db_config(path)
       remote_config = no_output do
-        capture("cat #{shared_path}/config/database.yml")
+        capture("cat #{path}")
       end
 
-      database_config = YAML::load(remote_config)["#{stage}"]
-
-      [
-        database_config['username'],
-        database_config['password'],
-        database_config['database'],
-        database_config['host'],
-      ]
+      YAML::load(remote_config)[fetch(:stage).to_s]
     end
 
-    def local_database_config
-      database_config = YAML::load_file("config/database.yml")["development"]
+    def local_db_config(path)
+      YAML::load_file(path)["development"]
+    end
 
-      [
-        database_config['username'],
-        database_config['password'],
-        database_config['database'],
-        database_config['host'],
-      ]
+    def dump_cmd(config, dump_file_path)
+      case config['adapter']
+      when 'postgresql'
+        cmd = "export PGPASSWORD=#{config['password']}; pg_dump #{config['database']}" +
+                " --username=#{config['username']} --no-owner --no-acl --format=c"
+        cmd << " --host=#{config['host']}" unless config['host'].nil?
+        cmd << " --port=#{config['port']}" unless config['port'].nil?
+        cmd + " > #{dump_file_path}"
+      when 'mysql2'
+      else
+        raise NotSupportDatabaseAdapter.new
+      end
+    end
+
+    def import_cmd(config, db_file_path)
+      case config['adapter']
+      when 'postgresql'
+        cmd = "pg_restore #{db_file_path} --no-owner --no-acl -d #{config['database']}"
+        cmd << " --host=#{config['host']}" unless config['host'].nil?
+        cmd << " --port=#{config['port']}" unless config['port'].nil?
+        cmd
+      when 'mysql2'
+      else
+        raise NotSupportDatabaseAdapter.new
+      end
     end
 
     def no_output
@@ -72,6 +101,10 @@ namespace :toolbox do
       result = yield
       SSHKit.config.output = default
       result
+    end
+
+    def db_config_path_msg
+      "enter your custom config path?(Y/N)"
     end
   end
 end
