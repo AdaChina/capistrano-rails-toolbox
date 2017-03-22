@@ -1,11 +1,11 @@
 class NotSupportDatabaseAdapter < RuntimeError; end
 
 namespace :toolbox do
-  namespace :pg do
+  namespace :db do
     desc <<-DESC
-      load remote databse data to local
+      load remote databse data to local, support adapter: mysql2, postgresql
     DESC
-    task :load_remote_db do
+    task :load_remote do
       on roles(:db) do |server|
         info "make sure you are not connecting to the local database"
 
@@ -77,6 +77,11 @@ default remote config path: #{remote_config_path}
         cmd << " --port=#{config['port']}" unless config['port'].nil?
         cmd + " > #{dump_file_path}"
       when 'mysql2'
+        cmd = "mysqldump --routines --user=#{config['username']}" +
+                " --password=#{config['password']}"
+        cmd << " --host=#{config['host']}" unless config['host'].nil?
+        cmd << " --port=#{config['port']}" unless config['port'].nil?
+        cmd + " #{config['database']} > #{dump_file_path}"
       else
         raise NotSupportDatabaseAdapter.new
       end
@@ -85,11 +90,16 @@ default remote config path: #{remote_config_path}
     def import_cmd(config, db_file_path)
       case config['adapter']
       when 'postgresql'
-        cmd = "pg_restore #{db_file_path} --no-owner --no-acl -d #{config['database']}"
+        cmd = "export PGPASSWORD=#{config['password']}; pg_restore #{db_file_path}" +
+                " --no-owner --no-acl -d #{config['database']}"
         cmd << " --host=#{config['host']}" unless config['host'].nil?
         cmd << " --port=#{config['port']}" unless config['port'].nil?
         cmd
       when 'mysql2'
+        cmd = "mysql --user=#{config['username']} --password=#{config['password']}"
+        cmd << " --host=#{config['host']}" unless config['host'].nil?
+        cmd << " --port=#{config['port']}" unless config['port'].nil?
+        cmd + " #{config['database']} < #{db_file_path}"
       else
         raise NotSupportDatabaseAdapter.new
       end
