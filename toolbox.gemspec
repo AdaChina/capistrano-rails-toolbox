@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
   s.authors     = ["ACzero"]
   s.email       = ["lzh.scut@hotmail.com"]
   s.homepage    = "https://github.com/AdaChina/capistrano-rails-toolbox"
-  s.summary     = "..."
-  s.description = "..."
+  s.summary     = "some useful tasks for capistrano-rails"
+  s.description = "tasks include loading db from server, tailing log and etc.."
   s.license     = "MIT"
 
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]
