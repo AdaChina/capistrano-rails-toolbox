@@ -32,27 +32,25 @@ default remote config path: #{remote_config_path}
         dump_file_path = "#{fetch(:deploy_to)}/#{db_filename}"
         local_file_path = "/tmp/#{db_filename}"
 
-        puts "start dumping database from remote..."
+        info "start dumping database from remote..."
         no_output do
           execute dump_cmd(remote_config, dump_file_path)
         end
 
-        puts "downloading..."
-        no_output do
-          download! dump_file_path, local_file_path
-        end
+        info "downloading..."
+        download! dump_file_path, local_file_path
 
-        puts "reset local database"
+        info "reset local database"
         system "bundle exec rake db:drop"
         system "bundle exec rake db:create"
 
-        puts "loading data..."
+        info "loading data..."
         system import_cmd(local_config, local_file_path)
 
-        puts "removing dump file..."
+        info "removing dump file..."
         system "rm #{local_file_path}"
-        no_output { execute "rm #{dump_file_path}" }
-        puts "done!"
+        execute "rm #{dump_file_path}"
+        info "done!"
       end
     end
 
