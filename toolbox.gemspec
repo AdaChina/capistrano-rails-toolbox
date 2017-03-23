@@ -11,12 +11,13 @@ Gem::Specification.new do |s|
   s.email       = ["lzh.scut@hotmail.com"]
   s.homepage    = "https://github.com/AdaChina/capistrano-rails-toolbox"
   s.summary     = "some useful tasks for capistrano-rails"
-  s.description = "tasks include loading db from server, tailing log and etc.."
+  s.description = "tasks include loading db from remote, tailing log and running console on remote"
   s.license     = "MIT"
 
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.rdoc"]
   s.test_files = Dir["test/**/*"]
 
+  gem.required_ruby_version = ">= 2.1.7"
   s.add_dependency "rails", "~> 4.1"
   s.add_dependency "capistrano", "~> 3.1"
   s.add_dependency "capistrano-rails", "~> 1.1"
