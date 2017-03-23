@@ -18,15 +18,29 @@ bundle install
 ```
 
 Add this to your `Capfile`
+
 ```ruby
 require 'capistrano/rails/toolbox'
 ```
 
 ## Usage
 
-to see what tasks this gem provides:
-```bash
-bundle exec cap -T
+Dump your remote database and import to local(support adapters: mysql2, postgresql): 
+
+```
+cap [stage] toolbox:db:load_remote
+```
+
+Tail log from remote log file:
+
+```
+cap [stage] toolbox:remote:log
+```
+
+Run a console on remote:
+
+```
+cap [stage] toolbox:remote:console
 ```
 
 ## Contributing
